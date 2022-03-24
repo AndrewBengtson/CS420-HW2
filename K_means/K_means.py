@@ -1,5 +1,18 @@
-from cProfile import label
+from sklearn.manifold import TSNE
+import seaborn as sns
 import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def show_output(df,non_numberic,save_name):
+    m = TSNE(learning_rate=50)
+    features = m.fit_transform(non_numberic)
+    df['x'] = features[:,0]
+    df['y'] = features[:,1]
+
+    sns.scatterplot(x='x',y='y',data=df,hue=df['label'])
+    plt.savefig(save_name)
+
 
 #K is customizable but by default we will use K=3
 K=3
@@ -32,25 +45,45 @@ while recalculating:
         new_centroid = cluster.mean(axis=0)
         new_centroids.append(new_centroid.to_frame().T)
     new_centroids = pd.concat(new_centroids)
-    print(new_centroids)
     #if there have been no changes since the last loop, exit the lop
     if(new_centroids.sort_values(by=['SepalLengthCm']).equals(centroids.sort_values(by=['SepalLengthCm']))):
         recalculating = False
     centroids = new_centroids
+show_output(train_df_cluster,train_df_cluster.drop(['label'],axis=1),"Train_out.png")
 ###################### Validation ######################
 
 #load in the validation data
-
+valid_df = pd.read_csv("K_means_valid.csv")
 #classify the validation data based on our centroids
-
-#match validation clusters to their assinged counterparts
-
-#see what percent are mis-classified
+#calculate the distance between each point and the centroids
+distances = pd.DataFrame()
+i=0
+for index, centroid in centroids.iterrows():
+    dimensional_distances = ((valid_df- centroid)**2)
+    dimensional_distances['distance'] = (dimensional_distances.sum(axis=1))**0.5
+    distances['cluster'+str(i)] = dimensional_distances['distance'] 
+    i+=1
+#assign each point to the cluster it is closest to
+clusters = distances.idxmin(axis=1)
+valid_df_cluster = valid_df.copy()
+valid_df_cluster['label'] = clusters
 
 ###################### Testing ######################
 
 #load the test data
-
+test_df = pd.read_csv('K_means_test.csv')
 #classify based on our centroids
-
+#calculate the distance between each point and the centroids
+distances = pd.DataFrame()
+i=0
+for index, centroid in centroids.iterrows():
+    dimensional_distances = ((test_df- centroid)**2)
+    dimensional_distances['distance'] = (dimensional_distances.sum(axis=1))**0.5
+    distances['cluster'+str(i)] = dimensional_distances['distance'] 
+    i+=1
+#assign each point to the cluster it is closest to
+clusters = distances.idxmin(axis=1)
+test_df_cluster = test_df.copy()
+test_df_cluster['label'] = clusters
 #plot the clustering results using T-SNE (bonus points)
+show_output(test_df_cluster,test_df_cluster.drop(['label','labels'],axis=1),"Test_out.png")
