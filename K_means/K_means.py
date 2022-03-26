@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 
 
 def show_output(df,non_numberic,save_name):
-    m = TSNE(learning_rate=50)
+    m = TSNE()
     features = m.fit_transform(non_numberic)
     df['x'] = features[:,0]
     df['y'] = features[:,1]
 
-    sns.scatterplot(x='x',y='y',data=df,hue=df['label'])
+    sns.scatterplot(x='x',y='y',data=df,hue=df['label'],style=df['data_type'],size=df['data_type'])
     plt.savefig(save_name)
 
 
@@ -49,7 +49,6 @@ while recalculating:
     if(new_centroids.sort_values(by=['SepalLengthCm']).equals(centroids.sort_values(by=['SepalLengthCm']))):
         recalculating = False
     centroids = new_centroids
-show_output(train_df_cluster,train_df_cluster.drop(['label'],axis=1),"Train_out.png")
 ###################### Validation ######################
 
 #load in the validation data
@@ -85,5 +84,13 @@ for index, centroid in centroids.iterrows():
 clusters = distances.idxmin(axis=1)
 test_df_cluster = test_df.copy()
 test_df_cluster['label'] = clusters
+#print the estimations
+print(test_df_cluster.drop(['labels'],axis=1).to_string())
 #plot the clustering results using T-SNE (bonus points)
-show_output(test_df_cluster,test_df_cluster.drop(['label','labels'],axis=1),"Test_out.png")
+#add a column which tells us which dataset each comes from
+print(train_df_cluster.count()['label'])
+train_df_cluster["data_type"] = ["train"] * train_df_cluster.count()['label']
+test_df_cluster["data_type"] = ["test"] *test_df_cluster.count()['label']
+valid_df_cluster["data_type"] = ["valid"] *valid_df_cluster.count()['label']
+print(pd.concat([train_df_cluster,test_df_cluster,valid_df_cluster]))
+show_output(pd.concat([train_df_cluster,test_df_cluster,valid_df_cluster]),pd.concat([train_df_cluster,test_df_cluster,valid_df_cluster]).drop(['label','labels','Id',"Labels","data_type"],axis=1),"Test_out.png")
