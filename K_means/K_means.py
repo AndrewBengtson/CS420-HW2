@@ -22,7 +22,6 @@ train_df = pd.read_csv('K_means_train.csv')
 train_df = train_df.drop(["Labels","Id"],axis=1)
 #pick K initial points as centroids
 centroids = train_df.sample(n=K)
-print(train_df)
 recalculating = True
 #looping:
 while recalculating:
@@ -66,7 +65,8 @@ for index, centroid in centroids.iterrows():
 clusters = distances.idxmin(axis=1)
 valid_df_cluster = valid_df.copy()
 valid_df_cluster['label'] = clusters
-
+print("K_means versus validation")
+print(valid_df_cluster.drop(['Id',  'SepalLengthCm',  'SepalWidthCm',  'PetalLengthCm',  'PetalWidthCm'],axis=1).rename(columns={'Labels':'Validation_Data','label':'K_Means'}))
 ###################### Testing ######################
 
 #load the test data
@@ -88,9 +88,7 @@ test_df_cluster['label'] = clusters
 print(test_df_cluster.drop(['labels'],axis=1).to_string())
 #plot the clustering results using T-SNE (bonus points)
 #add a column which tells us which dataset each comes from
-print(train_df_cluster.count()['label'])
 train_df_cluster["data_type"] = ["train"] * train_df_cluster.count()['label']
 test_df_cluster["data_type"] = ["test"] *test_df_cluster.count()['label']
 valid_df_cluster["data_type"] = ["valid"] *valid_df_cluster.count()['label']
-print(pd.concat([train_df_cluster,test_df_cluster,valid_df_cluster]))
 show_output(pd.concat([train_df_cluster,test_df_cluster,valid_df_cluster]),pd.concat([train_df_cluster,test_df_cluster,valid_df_cluster]).drop(['label','labels','Id',"Labels","data_type"],axis=1),"Test_out.png")
