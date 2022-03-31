@@ -1,7 +1,20 @@
+from sklearn.manifold import TSNE
+import seaborn as sns
 import pandas as pd
+import matplotlib.pyplot as plt
 
+K=1
 
-K=10
+#Helper function that produces graphs using TSNE
+def show_output(df,non_numberic,save_name):
+    m = TSNE()
+    features = m.fit_transform(non_numberic)
+    df['x'] = features[:,0]
+    df['y'] = features[:,1]
+
+    sns.scatterplot(x='x',y='y',data=df,hue=df['Labels'],style=df['data_type'],size=df['data_type'])
+    plt.savefig(save_name)
+
 
 #This helper function is going to find the K nearest neighbors
 def findKNN(training_df,classify_df,K,output_name):
@@ -25,9 +38,16 @@ training_df = pd.read_csv("KNN_train.csv")
 #load in the validating data set
 valid_df = pd.read_csv("KNN_valid.csv")
 #call a KNN helper function
-print(findKNN(training_df,valid_df,K,"Classify_Labels"))
+valid_df = findKNN(training_df,valid_df,K,"Classify_Labels")
 ###################### Testing ######################
 #load in the testing data set
 testing_df = pd.read_csv("KNN_test.csv")
 #call a KNN helper function
-print(findKNN(training_df,testing_df,K,"Labels"))
+testing_df = findKNN(training_df,testing_df,K,"Labels")
+print(testing_df)
+#print graphs with TSNE
+#add a column which tells us which dataset each comes from
+training_df["data_type"] = ["train"] * training_df.count()['Labels']
+testing_df["data_type"] = ["test"] *testing_df.count()['Labels']
+valid_df["data_type"] = ["valid"] *valid_df.count()['Labels']
+show_output(pd.concat([training_df,testing_df,valid_df]),pd.concat([training_df,testing_df,valid_df]).drop(['Labels',"Classify_Labels",'Id',"data_type"],axis=1),"K="+str(K)+".png")
