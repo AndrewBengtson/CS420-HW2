@@ -2,11 +2,19 @@ from sklearn.manifold import TSNE
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
+import os.path
+import pickle
 
-
+#This helper method uses TSNE to visualize the classification results
 def show_output(df,non_numberic,save_name):
-    m = TSNE()
-    features = m.fit_transform(non_numberic)
+    #If we already have the features file, use it
+    if(os.path.exists("features.pkl")):
+        features = pickle.load(open('features.pkl','rb'))
+    #if features hasn't been trained yet, make a new one
+    else:
+        m = TSNE()
+        features = m.fit_transform(non_numberic)
+        pickle.dump(features,open('features.pkl','ab'))
     df['x'] = features[:,0]
     df['y'] = features[:,1]
 
