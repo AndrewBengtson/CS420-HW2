@@ -4,8 +4,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os.path
 import pickle
-K=50
+import time
 
+start = time.time()
+K=20
+print("K = ",K)
 #Helper function that produces graphs using TSNE
 def show_output(df,non_numberic,save_name):
     #If we already have the features file, use it
@@ -46,11 +49,14 @@ training_df = pd.read_csv("KNN_train.csv")
 valid_df = pd.read_csv("KNN_valid.csv")
 #call a KNN helper function
 valid_df = findKNN(training_df,valid_df,K,"Classify_Labels")
+print("validation data")
+print(valid_df)
 ###################### Testing ######################
 #load in the testing data set
 testing_df = pd.read_csv("KNN_test.csv")
 #call a KNN helper function
 testing_df = findKNN(training_df,testing_df,K,"Labels")
+print("testing data")
 print(testing_df)
 #print graphs with TSNE
 #add a column which tells us which dataset each comes from
@@ -58,3 +64,5 @@ training_df["data_type"] = ["train"] * training_df.count()['Labels']
 testing_df["data_type"] = ["test"] *testing_df.count()['Labels']
 valid_df["data_type"] = ["valid"] *valid_df.count()['Labels']
 show_output(pd.concat([training_df,testing_df,valid_df]),pd.concat([training_df,testing_df,valid_df]).drop(['Labels',"Classify_Labels",'Id',"data_type"],axis=1),"K="+str(K)+".png")
+end = time.time()
+print("runtime was "+str(end-start)+" seconds")
