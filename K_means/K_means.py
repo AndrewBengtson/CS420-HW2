@@ -4,6 +4,34 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os.path
 import pickle
+import time
+
+###################### Helper functions ##########################
+
+#this helper function updates the list of all possible centroids
+def log_centroids(initial_points,centroids):
+    #centroids are sorted to reduce redundancy
+    centroids.sort()
+    if(os.path.exists('centroids.pkl')):
+        centroids_file = open('centroids.pkl','rb')
+        past_centroids = pickle.load(centroids_file)
+        if centroids not in past_centroids[0]:
+            past_centroids[0].append(centroids)
+            past_centroids[1].append(initial_points)
+            centroids_file.close()
+        centroids_file = open('centroids.pkl','ab') 
+        pickle.dump(past_centroids,centroids_file)
+
+    else:
+        past_centroids = [[],[],[]]
+        past_centroids[0].append(centroids)
+        past_centroids[1].append(initial_points)
+        centroids_file = open('centroids.pkl','ab')
+        pickle.dump(past_centroids,centroids_file)
+    centroids_file.close()
+    print(past_centroids)
+    print("there are",len(past_centroids[0]),"centroids found so far")
+        
 
 #This helper method uses TSNE to visualize the classification results
 def show_output(df,non_numberic,save_name):
@@ -22,6 +50,9 @@ def show_output(df,non_numberic,save_name):
     plt.savefig(save_name)
 
 
+
+############################# Main Program #################
+start = time.time()
 #K is customizable but by default we will use K=3
 K=3
 ###################### Training ######################
@@ -30,6 +61,7 @@ train_df = pd.read_csv('K_means_train.csv')
 train_df = train_df.drop(["Labels","Id"],axis=1)
 #pick K initial points as centroids
 centroids = train_df.sample(n=K)
+initial_points = centroids.values.tolist()
 recalculating = True
 #looping:
 while recalculating:
@@ -73,7 +105,8 @@ for index, centroid in centroids.iterrows():
 clusters = distances.idxmin(axis=1)
 valid_df_cluster = valid_df.copy()
 valid_df_cluster['label'] = clusters
-print("K_means versus validation")
+print("For Initial Points: "+str(initial_points))
+print("Centroids found at" + centroids.to_string())
 print(valid_df_cluster.drop(['Id',  'SepalLengthCm',  'SepalWidthCm',  'PetalLengthCm',  'PetalWidthCm'],axis=1).rename(columns={'Labels':'Validation_Data','label':'K_Means'}))
 ###################### Testing ######################
 
@@ -93,10 +126,14 @@ clusters = distances.idxmin(axis=1)
 test_df_cluster = test_df.copy()
 test_df_cluster['label'] = clusters
 #print the estimations
+
 print(test_df_cluster.drop(['labels'],axis=1).to_string())
 #plot the clustering results using T-SNE (bonus points)
 #add a column which tells us which dataset each comes from
 train_df_cluster["data_type"] = ["train"] * train_df_cluster.count()['label']
 test_df_cluster["data_type"] = ["test"] *test_df_cluster.count()['label']
 valid_df_cluster["data_type"] = ["valid"] *valid_df_cluster.count()['label']
-show_output(pd.concat([train_df_cluster,test_df_cluster,valid_df_cluster]),pd.concat([train_df_cluster,test_df_cluster,valid_df_cluster]).drop(['label','labels','Id',"Labels","data_type"],axis=1),"Test_out.png")
+show_output(pd.concat([train_df_cluster,test_df_cluster,valid_df_cluster]),pd.concat([train_df_cluster,test_df_cluster,valid_df_cluster]).drop(['label','labels','Id',"Labels","data_type"],axis=1),str(initial_points)+".png")
+log_centroids(initial_points,centroids.values.tolist())
+end = time.time()
+print("runtime was "+str(end-start)+" seconds")
